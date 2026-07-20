@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 Нейро-диагностика</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css?v=2">
+</head>
+<body>
+    <div class="container">
+        <!-- ЛОГОТИП ГЕНЕТИКА -->
+        <img src="/static/genetika_logotip.png" alt="Генетика" class="logo">
+
+        <h1><i class="fas fa-brain"></i> Нейро-диагностика</h1>
+        <p><i class="fas fa-x-ray"></i> Загрузите снимок МРТ для анализа</p>
+        
+        <input type="file" id="imageInput" accept="image/*">
+        <button onclick="predict()"><i class="fas fa-microscope"></i> Распознать</button>
+        
+        <div id="result">
+            <div id="classResult"></div>
+            <div id="imagesResult"></div>
+        </div>
+
+        <!-- ТРИ БАННЕРА-КАРТИНКИ ВНИЗУ -->
+        <div class="partners">
+            <img src="/static/Logotip_vertikalnyi_774_2_stroki.png" alt="Heart Almazova" class="partner-logo">
+            <img src="/static/balshii.png" alt="Большие вызовы" class="partner-logo">
+            <img src="/static/sirius.png" alt="Сириус" class="partner-logo">
+        </div>
+    </div>
+
+    <script>
+        async function predict() {
+            const input = document.getElementById('imageInput');
+            if (!input.files[0]) {
+                alert('Выберите изображение!');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const imageData = e.target.result;
+                try {
+                    const response = await fetch('/predict', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ image: imageData })
+                    });
+                    const data = await response.json();
+                    if (data.error) {
+                        document.getElementById('classResult').innerHTML = `<p style="color:red;">❌ Ошибка: ${data.error}</p>`;
+                        return;
+                    }
+                    document.getElementById('classResult').innerHTML = `
+                        <h2>🧬 Результат</h2>
+                        <p><strong>${data.class}</strong></p>
+                        <div class="description">
+                            <p>${data.description}</p>
+                        </div>
+                    `;
+                    if (data.original && data.mask && data.overlay) {
+                        document.getElementById('imagesResult').innerHTML = `
+                            <div class="image-grid">
+                                <div>
+                                    <h3>📷 Оригинал</h3>
+                                    <img src="data:image/png;base64,${data.original}" alt="Оригинал">
+                                </div>
+                                <div>
+                                    <h3>🎯 Маска</h3>
+                                    <img src="data:image/png;base64,${data.mask}" alt="Маска">
+                                </div>
+                                <div>
+                                    <h3>🔴 Наложение</h3>
+                                    <img src="data:image/png;base64,${data.overlay}" alt="Наложение">
+                                </div>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    document.getElementById('classResult').innerHTML = `<p style="color:red;">❌ Ошибка: ${error}</p>`;
+                }
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    </script>
+</body>
+</html>

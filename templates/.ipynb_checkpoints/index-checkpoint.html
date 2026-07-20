@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Классификация опухолей</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Загрузи снимок МРТ</h1>
+        <p>Выбери изображение и нажми "Распознать"</p>
+        <input type="file" id="imageInput" accept="image/*">
+        <button onclick="predict()">Распознать</button>
+        <div id="result"></div>
+    </div>
+    <script>
+        async function predict() {
+            const input = document.getElementById('imageInput');
+            if (!input.files[0]) {
+                alert('Выбери изображение!');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const imageData = e.target.result;
+                try {
+                    const response = await fetch('/predict', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ image: imageData })
+                    });
+                    const data = await response.json();
+                    document.getElementById('result').innerHTML = `<h2>${data.result}</h2>`;
+                } catch (error) {
+                    alert('Ошибка: ' + error);
+                }
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    </script>
+</body>
+</html>
